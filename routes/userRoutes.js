@@ -181,6 +181,8 @@ userRouter.get('/',async(req,res)=>{
     try {
         const userProfile = userId ? await userModel.findById(userId)
                                     : await userModel.findOne({username:username}) 
+        if(!userProfile._id)
+            return res.status(400).json({ msg: 'user not found' });
         res.status(200).json(userProfile)
     } 
     catch (error) {
