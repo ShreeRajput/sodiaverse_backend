@@ -129,12 +129,12 @@ userRouter.delete('/:id',async(req,res)=>{
                 if(profile.coverPicturePublicId)
                     await deleteFromCloudinary(profile.coverPicturePublicId);
 
-                const response = await axios.get(`${BASE_URL}/api/posts/profile/${profile.username}`);
+                const response = await axios.get(`${process.env.BASE_URL}/api/posts/profile/${profile.username}`);
                 const allPosts = response.data;
 
                 await Promise.all(
                     allPosts.map(async (post) => {
-                        await axios.delete(`${BASE_URL}/api/posts/${post._id}`, { data: { userId: profile._id } });
+                        await axios.delete(`${process.env.BASE_URL}/api/posts/${post._id}`, { data: { userId: profile._id } });
                     })
                 );
 
@@ -149,7 +149,7 @@ userRouter.delete('/:id',async(req,res)=>{
                 const following = profile.followings
                     await Promise.all(
                         following.map(async (follo)=>{
-                            await axios.put(`${BASE_URL}/api/users/${profile._id}/removefollow`,{userId:follo})
+                            await axios.put(`${process.env.BASE_URL}/api/users/${profile._id}/removefollow`,{userId:follo})
                         }
                     )
                 )
