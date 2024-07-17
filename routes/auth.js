@@ -69,7 +69,8 @@ authRouter.post('/verifyOtp',async(req,res)=>{
         }
 
         if (user.otp !== req.body.otp || Date.now() > user.otpExpires) {
-            await userModel.findByIdAndDelete(user._id)
+            if(req.body.type!=="login")
+                await userModel.findByIdAndDelete(user._id)
             return res.status(400).json({ msg: "Invalid or expired OTP!" });
         }
 
