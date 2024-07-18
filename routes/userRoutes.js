@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt'
 import { upload } from '../middlewares/multer.js'
 import { uploadOnCloudinary , deleteFromCloudinary } from '../services/cloudinary.js'
 import { userModel } from '../models/userModel.js'
+import postModel from '../models/postModel.js'
 import fs from 'fs'
 import checking from '../middlewares/middleware.js'
 
@@ -121,7 +122,7 @@ userRouter.delete('/:id',async(req,res)=>{
 
         try {
             const profile = await userModel.findById(req.params.id)
-            const passCheck = await bcrypt.compare(req.query.password,profile.password)
+            const passCheck =  bcrypt.compare(req.query.password,profile.password)
             
             if(passCheck) {
                 if(profile.profilePicturePublicId)
@@ -130,17 +131,39 @@ userRouter.delete('/:id',async(req,res)=>{
                     await deleteFromCloudinary(profile.coverPicturePublicId);
 
                 const response = await axios.get(`${process.env.BASE_URL}/api/posts/profile/${profile.username}`);
-                const allPosts = response.data;
+                const allPostsByUser = response.data;
 
                 await Promise.all(
-                    allPosts.map(async (post) => {
+                    allPostsByUser.map(async (post) => {
                         await axios.delete(`${process.env.BASE_URL}/api/posts/${post._id}`, { data: { userId: profile._id } });
                     })
                 );
 
+                //removes likes bookmarks comments done by user
+                const allPosts = await postModel.find({});
+                const profileId = profile._id;
+                await Promise.all(
+                    allPosts.map(async (post) => {
+                        // Remove profileId from likes array
+                        post.likes = post.likes.filter(like => like.toString() !== profileId.toString());
+                        // Remove profileId from bookmarks array
+                        post.bookmarks = post.bookmarks.filter(bookmark => bookmark.toString() !== profileId.toString());
+                        // Remove comments made by the profileId
+                        post.comments = post.comments.filter(comment => comment.userId.toString() !== profileId.toString());
+                        // Save the updated post back to the database
+                        return post.save();
+                    })
+                );
+
+                // Remove conversations and messages by user
+                await axios.delete(`${process.env.BASE_URL}/api/conversation/${profileId}`)
+                await axios.delete(`${process.env.BASE_URL}/api/message/${profileId}`)
+
+
+                //removes followings and followers
                 const followers = profile.followers
-                    await Promise.all(
-                        followers.map(async (follo)=>{
+                await Promise.all(
+                    followers.map(async (follo)=>{
                             await axios.put(`${process.env.BASE_URL}/api/users/${profile._id}/follow`,{userId:follo})
                         }
                     )

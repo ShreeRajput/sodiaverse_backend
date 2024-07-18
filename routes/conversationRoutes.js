@@ -39,4 +39,16 @@ conversationRouter.get('/:id',async(req,res)=> {
     }
 })
 
+//delete all covs of a user
+conversationRouter.delete('/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        await conversationModel.deleteMany({ members: userId }); // Use deleteMany to delete all matching documents
+        res.status(200).json({ msg: "Conversations deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: "Error occurred while deleting conversations" });
+    }
+})
+
 export default conversationRouter
