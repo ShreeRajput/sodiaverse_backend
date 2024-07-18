@@ -197,7 +197,7 @@ userRouter.get('/',async(req,res)=>{
 userRouter.get('/search/:query',async(req,res)=>{
     const query = req.params.query
     try {
-        const response = await userModel.find({ username: { $regex: query, $options: 'i' } });
+        const response = await userModel.find({ username: { $regex: query, $options: 'i' }, isVerified: true });
         res.status(200).json(response)
     } catch (error) {
         console.log(error)
@@ -315,6 +315,11 @@ userRouter.get('/allUsers',async(req,res)=>{
     try {
         const response = await userModel.aggregate([
             {
+              $match: {
+                isVerified: true
+              }
+            },
+            {
               $addFields: {
                 followersLength: { $size: "$followers" },
                 followingsLength: { $size: "$followings" }
@@ -322,20 +327,22 @@ userRouter.get('/allUsers',async(req,res)=>{
             },
             {
               $sort: {
-                followersLength: -1, 
-                followingsLength: 1 
+                followersLength: -1,
+                followingsLength: 1
               }
             },
             {
-                $project: {
-                    _id: 1,
-                    username: 1,
-                    profilePicture: 1,
-                    birthday : 1
-                }
+              $project: {
+                _id: 1,
+                username: 1,
+                profilePicture: 1,
+                birthday: 1
+              }
             }
           ]);
-        res.status(200).json(response)
+          
+          res.status(200).json(response);
+                    
     } catch (error) {
         console.log(error)
         res.status(400).json(error)
