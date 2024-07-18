@@ -182,7 +182,7 @@ userRouter.get('/',async(req,res)=>{
         const userProfile = userId ? await userModel.findOne({_id: userId, isVerified: true})
                                    : await userModel.findOne({ username: username, isVerified: true })
  
-        if(!userProfile._id)
+        if(!userProfile?._id)
             return res.status(400).json({ msg: 'user not found' });
         res.status(200).json(userProfile)
     } 
